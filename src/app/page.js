@@ -1,7 +1,9 @@
-import Image from "next/image";
+import App from "@/components/App";
 
 export default function Home() {
   return (
-    <><h1>Hello world</h1></>
+    <div className="h-screen flex justify-center items-center">
+      <App />
+    </div>
   );
 }
