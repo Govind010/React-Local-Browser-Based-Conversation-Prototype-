@@ -14,19 +14,26 @@ import {
 import { Button } from "@/components/ui/button";
 
 const App = () => {
-  const [text, setText] = useState("hello world");
+  const [text, setText] = useState("");
 
   function startRecording() {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
+    const recognition = new SpeechRecognition();
 
-      recognition.onresult = async function(event){
-        const transcript = event.results[0][0].transcript;
-        setText(transcript);
-      }
+    recognition.onresult = function (event) {
+      const transcript = event.results[0][0].transcript;
+      setText(transcript);
+      console.log(transcript);
+      speek();
+    };
 
-      recognition.start();
+    recognition.start();
+  }
+
+  function speek() {
+    let utterance = new SpeechSynthesisUtterance(text);
+    speechSynthesis.speak(utterance);
   }
 
   return (
@@ -41,7 +48,7 @@ const App = () => {
           </ScrollArea>
         </CardContent>
         <CardFooter>
-          <Button>
+          <Button onClick={startRecording}>
             Click me
             <Microphone />
           </Button>
