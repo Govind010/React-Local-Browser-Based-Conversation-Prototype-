@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { use, useState, useEffect } from "react";
 import { Microphone } from "@mynaui/icons-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -25,16 +25,15 @@ const App = () => {
       const transcript = event.results[0][0].transcript;
       setText(transcript);
       console.log(transcript);
-      speek();
     };
 
     recognition.start();
   }
 
-  function speek() {
+  useEffect(() => {
     let utterance = new SpeechSynthesisUtterance(text);
-    speechSynthesis.speak(utterance);
-  }
+    window.speechSynthesis.speak(utterance);
+  }, [text]);
 
   return (
     <div className="w-full max-w-md text-center ">
