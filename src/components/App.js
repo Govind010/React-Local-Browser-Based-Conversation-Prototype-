@@ -24,35 +24,58 @@ const App = () => {
       window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
 
-    recognition.onresult = function (event) {
+    recognition.onresult = async function (event) {
       const transcript = event.results[0][0].transcript;
       setText(transcript);
       console.log(transcript);
-      apiResponse();
+      apiResponse(transcript);
+    };
+    recognition.onerror = (event) => {
+      console.error("Speech Recognition Error:", event.error);
+
+      switch (event.error) {
+        case "no-speech":
+          alert("No speech detected. Please try again.");
+          break;
+        case "audio-capture":
+          alert("Microphone not found. Please check your device.");
+          break;
+        case "not-allowed":
+          alert("Permission denied. Allow microphone access in settings.");
+          break;
+        case "network":
+          alert("Network error. Please check your internet connection.");
+          break;
+        default:
+          alert("An unknown error occurred: " + event.error);
+      }
     };
 
     recognition.start();
   }
 
-
-  async function apiResponse() {
-    const genAI = new GoogleGenerativeAI("AIzaSyC0VzO4OUxyfi-9W8c9bz4cqBtzES4vEwo"); 
+  // api response
+  async function apiResponse(transcript) {
+    const genAI = new GoogleGenerativeAI(
+      process.env.NEXT_PUBLIC_GOOGLE_API_KEY
+    );
 
     const model = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
     });
 
-    const prompt = `Give human like response to this message : ${text}`;
+    const prompt = `Give human like response to this message. the response must be only text : ${transcript}`;
 
     const result = await model.generateContent(prompt);
-    setResponse(result.response.text);
+    setResponse(result.response.text());
     console.log(result.response.text());
   }
 
   // Speak the text
   useEffect(() => {
+    const speechSynthesis = window.speechSynthesis;
     let utterance = new SpeechSynthesisUtterance(response);
-    window.speechSynthesis.speak(utterance);
+    speechSynthesis.speak(utterance);
   }, [response]);
 
   return (
@@ -64,11 +87,24 @@ const App = () => {
 
         <CardContent>
           <ScrollArea className="h-[200px] rounded-md border p-4">
-            <div>{text}</div>
+            {text ? (
+              <>
+                <div className="mb-4 p-2 rounded-lg bg-blue-100 text-left">
+                  <b>You: </b> {text}
+                </div>
+                <div className="mb-4 p-2 rounded-lg bg-gray-100 text-left">
+                  <b>Bot: </b> {response}
+                </div>
+              </>
+            ) : (
+              <div className="text-gray-400 text-center p-4">
+                Click the microphone to start talking
+              </div>
+            )}
           </ScrollArea>
         </CardContent>
 
-        <CardFooter>
+        <CardFooter className="flex justify-end">
           <Button onClick={startRecording}>
             Click me
             <Microphone />
