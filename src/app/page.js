@@ -1,11 +1,11 @@
 import App from "@/components/App";
-import App2 from "@/components/APP2";
+import ChatBot from "@/components/ChatBot";
 
 export default function Home() {
   return (
     <div className="h-screen flex justify-center items-center">
-      <App />
-      {/* <App2></App2> */}
+      {/* <App /> */}
+      <ChatBot />
     </div>
   );
 }
