@@ -19,6 +19,7 @@ export default function ChatBot() {
   const [messages, setMessages] = useState([]);
   const [response, setResponse] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [listining, setListining] = useState(false);
   const messagesEndRef = useRef(null);
 
   // Scroll to bottom whenever messages change
@@ -30,40 +31,86 @@ export default function ChatBot() {
   useEffect(() => {
     const speechSynthesis = window.speechSynthesis;
     let utterance = new SpeechSynthesisUtterance(response);
+    // When speech synthesis finishes, start listening
+    utterance.onend = () => {
+      startRecording();
+    };
     speechSynthesis.speak(utterance);
   }, [response]);
 
-  // Start recording the voice
-  function startRecording() {
+  // Continue reccording
+  function continueSpeaking(speechSynthesis) {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
 
-    recognition.onresult = async function (event) {
-      const transcript = event.results[0][0].transcript;
-      // setText(transcript);
-      console.log(transcript);
-      apiResponse(transcript);
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    // Start listening while speaking
+    recognition.start();
+
+    // Variable to store transcript
+    let currentTranscript = "";
+
+    // Listen for speech events
+    recognition.onresult = function (event) {
+      currentTranscript = event.results[0][0].transcript;
+      console.log("Detected speech:", currentTranscript);
     };
+
+    // End listening when voice ends
+    recognition.onspeechend = () => {
+      recognition.stop();
+      setListining(false);
+      if (currentTranscript) {
+        apiResponse(currentTranscript);
+      }
+    };
+
+    // Cancel speech synthesis when user starts speaking
+    recognition.onspeechstart = () => {
+      speechSynthesis.cancel();
+      console.log("User started speaking, canceling speech synthesis");
+    };
+
+    // Handle errors
     recognition.onerror = (event) => {
       console.error("Speech Recognition Error:", event.error);
+      recognition.stop();
+      setListining(false);
+    };
+  }
 
-      switch (event.error) {
-        case "no-speech":
-          alert("No speech detected. Please try again.");
-          break;
-        case "audio-capture":
-          alert("Microphone not found. Please check your device.");
-          break;
-        case "not-allowed":
-          alert("Permission denied. Allow microphone access in settings.");
-          break;
-        case "network":
-          alert("Network error. Please check your internet connection.");
-          break;
-        default:
-          alert("An unknown error occurred: " + event.error);
+  // Start recording the voice
+  function startRecording() {
+    // If already listening, stop the recognition
+    if (listining) {
+      setListining(false);
+      // If you have a reference to the active recognition instance, stop it
+      if (window.currentRecognition) {
+        window.currentRecognition.stop();
+        window.currentRecognition = null;
       }
+      return;
+    }
+    // Otherwise start listening
+    setListining(true);
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    // Store reference to stop it later
+    window.currentRecognition = recognition;
+    recognition.onresult = async function (event) {
+      const transcript = event.results[0][0].transcript;
+      console.log(transcript);
+      setListining(false);
+      apiResponse(transcript);
+    };
+    // Error handling code...
+    recognition.onerror = (event) => {
+      console.error("Speech Recognition Error:", event.error);
+      setListining(false);
     };
     recognition.start();
   }
@@ -77,29 +124,22 @@ export default function ChatBot() {
       role: "user",
       timestamp: new Date(),
     };
-
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
-
     try {
       console.log("Sending message to API...");
-
       // Call API route that interacts with Gemini
       const genAI = new GoogleGenerativeAI(
         process.env.NEXT_PUBLIC_GOOGLE_API_KEY
       );
-
       const model = genAI.getGenerativeModel({
         model: "gemini-1.5-flash",
       });
-
       const prompt = `Give human like response to this message. the response must be only text : ${transcript}`;
-
       const result = await model.generateContent(prompt);
       const aiText = result.response.text();
       setResponse(aiText);
       console.log(result.response.text());
-
       // Add AI response
       const aiMessage = {
         id: Date.now().toString(),
@@ -107,11 +147,9 @@ export default function ChatBot() {
         role: "assistant",
         timestamp: new Date(),
       };
-
       setMessages((prev) => [...prev, aiMessage]);
     } catch (error) {
       console.error("Error in chat:", error);
-
       const errorMessage = {
         id: Date.now().toString(),
         content: `Sorry, I encountered an error: ${
@@ -120,7 +158,6 @@ export default function ChatBot() {
         role: "assistant",
         timestamp: new Date(),
       };
-
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
@@ -194,7 +231,9 @@ export default function ChatBot() {
           <CardFooter className="p-4 border-t flex justify-center">
             <Button
               onClick={startRecording}
-              className="fixed rounded-full h-15 w-15 shadow-md cursor-pointer"
+              className={`fixed rounded-full h-15 w-15 shadow-md cursor-pointer ${
+                listining && "bg-red-500"
+              }`}
             >
               <Mic />
             </Button>
