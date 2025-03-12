@@ -117,6 +117,7 @@ export default function ChatBot() {
 
   // Handle sending a message
   async function apiResponse(transcript) {
+    const prevMessages = messages;
     // Add user message
     const userMessage = {
       id: Date.now().toString(),
@@ -135,8 +136,17 @@ export default function ChatBot() {
       const model = genAI.getGenerativeModel({
         model: "gemini-1.5-flash",
       });
-      const prompt = `Give human like response to this message. the response must be only text : ${transcript}`;
-      const result = await model.generateContent(prompt);
+      const chat = model.startChat({
+        history: prevMessages.map((msg) => ({
+          role: msg.role,
+          parts: [{ text: msg.content }],
+        })),
+        generationConfig: {
+          temperature: 0.7,
+        },
+      });
+      const prompt = `Give response like a 10 year kid. the response must be only text : ${transcript}`;
+      let result = await chat.sendMessage(prompt);
       const aiText = result.response.text();
       setResponse(aiText);
       console.log(result.response.text());
@@ -144,7 +154,7 @@ export default function ChatBot() {
       const aiMessage = {
         id: Date.now().toString(),
         content: aiText,
-        role: "assistant",
+        role: "model",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiMessage]);
@@ -155,7 +165,7 @@ export default function ChatBot() {
         content: `Sorry, I encountered an error: ${
           error instanceof Error ? error.message : "Unknown error"
         }. Please check your internet connection and try again.`,
-        role: "assistant",
+        role: "model",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
