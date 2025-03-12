@@ -10,11 +10,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Mic } from "lucide-react";
+import { Mic, XCircle } from "lucide-react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import ReactMarkdown from "react-markdown";
 
-// Changed to default export
 export default function ChatBot() {
   const [messages, setMessages] = useState([]);
   const [response, setResponse] = useState("");
@@ -38,7 +37,7 @@ export default function ChatBot() {
     speechSynthesis.speak(utterance);
   }, [response]);
 
-  // Continue reccording
+  // Continue reccording (not working at the moment)
   function continueSpeaking(speechSynthesis) {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -84,23 +83,11 @@ export default function ChatBot() {
 
   // Start recording the voice
   function startRecording() {
-    // If already listening, stop the recognition
-    if (listining) {
-      setListining(false);
-      // If you have a reference to the active recognition instance, stop it
-      if (window.currentRecognition) {
-        window.currentRecognition.stop();
-        window.currentRecognition = null;
-      }
-      return;
-    }
-    // Otherwise start listening
     setListining(true);
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
-    // Store reference to stop it later
-    window.currentRecognition = recognition;
+
     recognition.onresult = async function (event) {
       const transcript = event.results[0][0].transcript;
       console.log(transcript);
@@ -174,6 +161,17 @@ export default function ChatBot() {
     }
   }
 
+  // stop conversation
+  function stopChat() {
+    window.speechSynthesis.cancel(); // Stop speech synthesis
+    setListining(false); // Update state
+
+    // Stop speech recognition if running
+    if (window.recognition) {
+      window.recognition.stop();
+    }
+  }
+
   return (
     <>
       {/* Chat window */}
@@ -238,15 +236,24 @@ export default function ChatBot() {
             </ScrollArea>
           </CardContent>
 
-          <CardFooter className="p-4 border-t flex justify-center">
-            <Button
-              onClick={startRecording}
-              className={`fixed rounded-full h-15 w-15 shadow-md cursor-pointer ${
-                listining && "bg-red-500"
-              }`}
-            >
-              <Mic />
-            </Button>
+          <CardFooter className={`border-t`}>
+            <div className="p-4 w-full border-t flex justify-evenly">
+              <Button
+                onClick={startRecording}
+                className={`rounded-full h-15 w-15 shadow-md cursor-pointer ${
+                  listining && "bg-blue-500"
+                }`}
+              >
+                <Mic />
+              </Button>
+              <Button
+                onClick={stopChat}
+                variant={`destructive`}
+                className={`rounded-full h-15 w-15 shadow-md cursor-pointer`}
+              >
+                <XCircle />
+              </Button>
+            </div>
           </CardFooter>
         </Card>
       </div>
