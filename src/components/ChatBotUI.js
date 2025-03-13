@@ -30,7 +30,7 @@ export default function ChatBot() {
   return (
     <>
       {/* Chat window */}
-      <div className={`fixed bottom-15 right-20 w-96 z-5`}>
+      <div className={` w-80 fixed`}>
         <Card className="shadow-xl border-2">
           <CardHeader className="p-4 border-b flex flex-row justify-between items-center">
             <CardTitle className="text-lg font-medium">
@@ -106,7 +106,7 @@ export default function ChatBot() {
                     );
               }}
               className={`fixed rounded-full h-15 w-15 shadow-md cursor-pointer ${
-                listining && "bg-blue-500"
+                listining && "bg-red-500 hover:bg-red-400"
               }`}
             >
               {isConversation ? <XCircle /> : <Mic />}
