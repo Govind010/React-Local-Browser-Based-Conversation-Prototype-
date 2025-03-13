@@ -11,12 +11,12 @@ import {
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Mic, XCircle } from "lucide-react";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import ReactMarkdown from "react-markdown";
+import { startRecording, stopRecording } from "./speechToText";
 
 export default function ChatBot() {
+  const [isConversation, setIsConversation] = useState(false);
   const [messages, setMessages] = useState([]);
-  const [response, setResponse] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [listining, setListining] = useState(false);
   const messagesEndRef = useRef(null);
@@ -27,150 +27,6 @@ export default function ChatBot() {
   }, [messages]);
 
   // Speak the text
-  useEffect(() => {
-    const speechSynthesis = window.speechSynthesis;
-    let utterance = new SpeechSynthesisUtterance(response);
-    // When speech synthesis finishes, start listening
-    utterance.onend = () => {
-      startRecording();
-    };
-    speechSynthesis.speak(utterance);
-  }, [response]);
-
-  // Continue reccording (not working at the moment)
-  function continueSpeaking(speechSynthesis) {
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-
-    recognition.continuous = true;
-    recognition.interimResults = true;
-
-    // Start listening while speaking
-    recognition.start();
-
-    // Variable to store transcript
-    let currentTranscript = "";
-
-    // Listen for speech events
-    recognition.onresult = function (event) {
-      currentTranscript = event.results[0][0].transcript;
-      console.log("Detected speech:", currentTranscript);
-    };
-
-    // End listening when voice ends
-    recognition.onspeechend = () => {
-      recognition.stop();
-      setListining(false);
-      if (currentTranscript) {
-        apiResponse(currentTranscript);
-      }
-    };
-
-    // Cancel speech synthesis when user starts speaking
-    recognition.onspeechstart = () => {
-      speechSynthesis.cancel();
-      console.log("User started speaking, canceling speech synthesis");
-    };
-
-    // Handle errors
-    recognition.onerror = (event) => {
-      console.error("Speech Recognition Error:", event.error);
-      recognition.stop();
-      setListining(false);
-    };
-  }
-
-  // Start recording the voice
-  function startRecording() {
-    setListining(true);
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-
-    recognition.onresult = async function (event) {
-      const transcript = event.results[0][0].transcript;
-      console.log(transcript);
-      setListining(false);
-      apiResponse(transcript);
-    };
-    // Error handling code...
-    recognition.onerror = (event) => {
-      console.error("Speech Recognition Error:", event.error);
-      setListining(false);
-    };
-    recognition.start();
-  }
-
-  // Handle sending a message
-  async function apiResponse(transcript) {
-    const prevMessages = messages;
-    // Add user message
-    const userMessage = {
-      id: Date.now().toString(),
-      content: transcript,
-      role: "user",
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
-    try {
-      console.log("Sending message to API...");
-      // Call API route that interacts with Gemini
-      const genAI = new GoogleGenerativeAI(
-        process.env.NEXT_PUBLIC_GOOGLE_API_KEY
-      );
-      const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
-      });
-      const chat = model.startChat({
-        history: prevMessages.map((msg) => ({
-          role: msg.role,
-          parts: [{ text: msg.content }],
-        })),
-        generationConfig: {
-          temperature: 0.7,
-        },
-      });
-      const prompt = `Give response like a 10 year kid. the response must be only text : ${transcript}`;
-      let result = await chat.sendMessage(prompt);
-      const aiText = result.response.text();
-      setResponse(aiText);
-      console.log(result.response.text());
-      // Add AI response
-      const aiMessage = {
-        id: Date.now().toString(),
-        content: aiText,
-        role: "model",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, aiMessage]);
-    } catch (error) {
-      console.error("Error in chat:", error);
-      const errorMessage = {
-        id: Date.now().toString(),
-        content: `Sorry, I encountered an error: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }. Please check your internet connection and try again.`,
-        role: "model",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  // stop conversation
-  function stopChat() {
-    window.speechSynthesis.cancel(); // Stop speech synthesis
-    setListining(false); // Update state
-
-    // Stop speech recognition if running
-    if (window.recognition) {
-      window.recognition.stop();
-    }
-  }
 
   return (
     <>
@@ -236,24 +92,26 @@ export default function ChatBot() {
             </ScrollArea>
           </CardContent>
 
-          <CardFooter className={`border-t`}>
-            <div className="p-4 w-full border-t flex justify-evenly">
-              <Button
-                onClick={startRecording}
-                className={`rounded-full h-15 w-15 shadow-md cursor-pointer ${
-                  listining && "bg-blue-500"
-                }`}
-              >
-                <Mic />
-              </Button>
-              <Button
-                onClick={stopChat}
-                variant={`destructive`}
-                className={`rounded-full h-15 w-15 shadow-md cursor-pointer`}
-              >
-                <XCircle />
-              </Button>
-            </div>
+          <CardFooter className={`p-4 w-full border-t flex justify-center`}>
+            <Button
+              onClick={() => {
+                console.log("Clicked on cancel");
+                isConversation
+                  ? stopRecording(setIsConversation, setListining)
+                  : startRecording(
+                      setIsConversation,
+                      setListining,
+                      setMessages,
+                      messages,
+                      setIsLoading
+                    );
+              }}
+              className={`fixed rounded-full h-15 w-15 shadow-md cursor-pointer ${
+                listining && "bg-blue-500"
+              }`}
+            >
+              {isConversation ? <XCircle /> : <Mic />}
+            </Button>
           </CardFooter>
         </Card>
       </div>
