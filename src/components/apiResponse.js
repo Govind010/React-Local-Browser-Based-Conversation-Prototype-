@@ -5,7 +5,7 @@ export async function apiResponse(
   messages,
   setMessages,
   setIsLoading,
-  setListining,
+  setListening,
   setIsConversation
 ) {
   const prevMessages = messages;
@@ -44,7 +44,7 @@ export async function apiResponse(
       messages,
       setMessages,
       setIsLoading,
-      setListining,
+      setListening,
       setIsConversation
     );
     console.log(result.response.text());

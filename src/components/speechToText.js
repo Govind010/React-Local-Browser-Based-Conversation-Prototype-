@@ -1,4 +1,4 @@
-import { apiResponse } from "./apiService";
+import { apiResponse } from "./apiResponse";
 let recognition = null;
 
 export function startRecording(
@@ -10,13 +10,13 @@ export function startRecording(
 ) {
   setIsConversation(true);
   setListining(true);
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SpeechRecognition();
 
   recognition.onresult = async function (event) {
     const transcript = event.results[0][0].transcript;
     console.log("Result of ASR: " + transcript);
-    setListining(false);
     apiResponse(
       transcript,
       messages,
@@ -27,9 +27,14 @@ export function startRecording(
     );
   };
 
+  recognition.onend = () => {
+    setListining(false);
+  };
+
   recognition.onerror = (event) => {
     console.error("Speech Recognition Error:", event.error);
     setListining(false);
+    setIsConversation(false);
   };
   recognition.start();
   console.log("Listening...");
