@@ -38,7 +38,7 @@ export default function ChatBot() {
           </CardHeader>
 
           <CardContent className="p-0">
-            <ScrollArea className="h-96 px-1 border-3">
+            <ScrollArea className=" h-96 px-1 border-3">
               {messages.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-center p-8 text-gray-500">
                   <p>Hello! How can I help you today?</p>
