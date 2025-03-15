@@ -26,20 +26,19 @@ export default function ChatBot() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-
   return (
     <>
       {/* Chat window */}
       <div className={` w-80 fixed`}>
         <Card className="shadow-xl border-2">
-          <CardHeader className="p-4 border-b flex flex-row justify-between items-center">
+          <CardHeader className="flex flex-row justify-between items-center">
             <CardTitle className="text-lg font-medium">
               Chat Assistant
             </CardTitle>
           </CardHeader>
 
           <CardContent className="p-0">
-            <ScrollArea className="h-96 p-4">
+            <ScrollArea className="h-96 px-1 border-3">
               {messages.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-center p-8 text-gray-500">
                   <p>Hello! How can I help you today?</p>
@@ -91,7 +90,7 @@ export default function ChatBot() {
             </ScrollArea>
           </CardContent>
 
-          <CardFooter className={`p-4 w-full border-t flex justify-center`}>
+          <CardFooter className={`p-4 pt-0 w-full flex justify-center`}>
             <Button
               onClick={() => {
                 console.log("Clicked on cancel");
