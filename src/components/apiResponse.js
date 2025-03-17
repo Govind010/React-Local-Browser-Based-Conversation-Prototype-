@@ -41,7 +41,7 @@ export async function apiResponse(
 
     Message: "${transcript}" 
 
-    Your response should feel authentic, like a real conversation.`;
+    Your response should feel authentic, like a real conversation. and give only text response`;
 
     let result = await chat.sendMessage(prompt);
     const aiText = result.response.text();
