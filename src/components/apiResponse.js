@@ -36,7 +36,13 @@ export async function apiResponse(
         temperature: 0.7,
       },
     });
-    const prompt = `Give response like a 10 year kid. the response must be only text : ${transcript}`;
+    const prompt = `Respond to this message in a natural, conversational, and engaging way, as if you were a real human. Use casual language, contractions, and natural pauses. 
+    Make sure your response sounds friendly, expressive, and engaging. Don't be overly formal or robotic. 
+
+    Message: "${transcript}" 
+
+    Your response should feel authentic, like a real conversation.`;
+
     let result = await chat.sendMessage(prompt);
     const aiText = result.response.text();
     textToSpeech(
