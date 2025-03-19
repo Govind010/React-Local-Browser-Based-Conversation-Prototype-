@@ -15,6 +15,8 @@ export function startRecording(
   recognition = new SpeechRecognition();
 
   recognition.onresult = async function (event) {
+    // window.speechSynthesis.cancel();
+    console.log(event);
     const transcript = event.results[0][0].transcript;
     console.log("Result of ASR: " + transcript);
     apiResponse(
@@ -25,6 +27,11 @@ export function startRecording(
       setListining,
       setIsConversation
     );
+  };
+
+  recognition.onspeechstart = () => {
+    console.log("speech detected...");
+    // window.speechSynthesis.cancel();
   };
 
   recognition.onend = () => {

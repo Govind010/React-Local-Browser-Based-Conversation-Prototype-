@@ -19,7 +19,7 @@ export function textToSpeech(
   utterance.volume = 1.0;
 
   utterance.onend = () => {
-    console.log("Speech ended");
+    console.log("Speech started and recording too");
     startRecording(
       setIsConversation,
       setListining,

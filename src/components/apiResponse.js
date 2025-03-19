@@ -45,6 +45,7 @@ export async function apiResponse(
 
     let result = await chat.sendMessage(prompt);
     const aiText = result.response.text();
+    console.log("Response: " + aiText);
     textToSpeech(
       aiText,
       messages,
